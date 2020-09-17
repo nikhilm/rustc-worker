@@ -33,7 +33,7 @@ fn main() -> std::io::Result<()> {
                 let response = worker_protocol::WorkResponse {
                     request_id: message.request_id,
                     exit_code: output.status.code().unwrap(),
-                    output: String::from_utf8(output.stdout).unwrap(),
+                    output: String::from_utf8(output.stderr).unwrap(),
                 };
                 let mut response_buf = Vec::new();
                 response.encode_length_delimited(&mut response_buf)?;
