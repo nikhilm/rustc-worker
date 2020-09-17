@@ -1,5 +1,11 @@
+use prost::Message;
 use std::io::BufRead;
 use std::io::Read;
+use std::io::Write;
+
+pub mod worker_protocol {
+    include!(concat!(env!("OUT_DIR"), "/blaze.worker.rs"));
+}
 
 fn main() -> std::io::Result<()> {
     let mut args = std::env::args().peekable();
@@ -11,15 +17,29 @@ fn main() -> std::io::Result<()> {
     // If started as a persistent worker.
     if let Some(arg) = args.peek() {
         if arg == "--persistent_worker" {
-            // TODO: Handle remaining args and create a relevant config to launch the worker.
-            eprintln!("CWD: {:?}", std::env::current_dir()?);
-            for arg in args {
-                eprintln!("ARG: {}", arg);
+            loop {
+                // TODO: Move this to a lib.rs.
+                // TODO: Smarter buffer usage.
+                let mut buffer = [0; 10000];
+                eprintln!("READ {} BYTES", std::io::stdin().read(&mut buffer[..])?);
+                let message: worker_protocol::WorkRequest =
+                    prost::Message::decode_length_delimited(&buffer[..])?;
+                eprintln!("Req ID: {}", message.request_id);
+                eprintln!("Req args: {:?}", message.arguments);
+                eprintln!("---");
+                let mut cmd = std::process::Command::new(&program);
+                cmd.args(message.arguments);
+                let output = cmd.output()?;
+                let response = worker_protocol::WorkResponse {
+                    request_id: message.request_id,
+                    exit_code: output.status.code().unwrap(),
+                    output: String::from_utf8(output.stdout).unwrap(),
+                };
+                let mut response_buf = Vec::new();
+                response.encode_length_delimited(&mut response_buf)?;
+                std::io::stdout().write_all(&response_buf)?;
+                std::io::stdout().flush()?;
             }
-            let mut buffer = [0; 60];
-            eprintln!("READ {} BYTES", std::io::stdin().read(&mut buffer[..])?);
-            eprintln!("STDIN: {:?}", buffer);
-            std::process::exit(1);
         }
     }
 
