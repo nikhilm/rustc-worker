@@ -73,7 +73,10 @@ fn main() -> std::io::Result<()> {
                 eprintln!("Req args: {:?}", message.arguments);
                 eprintln!("---");
                 let mut cmd = std::process::Command::new(&program);
+                // TODO: Use workspace name etc.
+                std::fs::create_dir_all("/tmp/rustc-worker-ninjars/incremental")?;
                 cmd.args(message.arguments);
+                cmd.arg("--codegen=incremental=/tmp/rustc-worker-ninjars/incremental");
                 let output = cmd.output()?;
                 let response = worker_protocol::WorkResponse {
                     request_id: message.request_id,
