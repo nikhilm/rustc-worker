@@ -3,7 +3,10 @@ fn main() -> std::io::Result<()> {
     // Always discard the executable name.
     args.next().unwrap();
 
-    let program = args.next().expect("program name");
+    let program = std::fs::canonicalize(args.next().expect("program name"))?
+        .into_os_string()
+        .into_string()
+        .unwrap();
     let workspace = args.next().expect("workspace name");
     let worker = rustc_worker::Worker::new(program, workspace)?;
 
