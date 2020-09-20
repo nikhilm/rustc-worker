@@ -83,6 +83,14 @@ git checkout bazel
 bazel build ninja
 ```
 
+## Design
+
+Incrementality is obtained like this:
+
+1. On startup, the worker creates a [temporary directory](https://github.com/nikhilm/rustc-worker/blob/b840ea9f9276c47b97591d274823da54e4cbd75b/src/lib.rs#L20) uniquely identified by a hash of the path to `rustc` (actually a wrapper from rules\_rust) and the name of the Bazel workspace. This is the incremental cache. This ensures the cache is shared among all instances of rustc workers within the same workspace, but not in other workspaces.
+2. Bazel takes care of spawning multiple workers for parallelism. They all share the same cache. Since rustc operates at the crate level, and Bazel's design means that each crate has only one compilation artifact in the workspace, we can be reasonably sure that multiple `rustc` invocations never try to build the same crate at the same time. I'm not sure if this matters.
+3. The worker invokes `rustc` for each compilation request with `--codegen incremental=/path/to/cache`.
+
 ## TODO
 
 [ ] Tests
