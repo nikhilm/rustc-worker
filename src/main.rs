@@ -4,7 +4,8 @@ fn main() -> std::io::Result<()> {
     args.next().unwrap();
 
     let program = args.next().expect("program name");
-    let worker = rustc_worker::Worker::new(program)?;
+    let workspace = args.next().expect("workspace name");
+    let worker = rustc_worker::Worker::new(program, workspace)?;
 
     // If started as a persistent worker.
     if let Some(arg) = args.peek() {

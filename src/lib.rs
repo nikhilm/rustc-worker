@@ -9,16 +9,17 @@ pub mod worker_protocol {
 
 pub struct Worker {
     rustc: String,
-    incremental_dir: String,
+    incremental_dir: std::path::PathBuf,
 }
 
 impl Worker {
-    pub fn new<P: Into<String>>(rustc: P) -> io::Result<Self> {
-        // TODO: Use workspace name etc.
-        std::fs::create_dir_all("/tmp/rustc-worker-ninjars/incremental")?;
+    pub fn new<P: Into<String>, P2: Into<String>>(rustc: P, workspace: P2) -> io::Result<Self> {
+        let mut cache_path = std::env::temp_dir();
+        cache_path.push(format!("rustc-worker-{}", workspace.into()));
+        std::fs::create_dir_all(&cache_path)?;
         Ok(Worker {
             rustc: rustc.into(),
-            incremental_dir: "/tmp/rustc-worker-ninjars/incremental".into(),
+            incremental_dir: cache_path,
         })
     }
 
@@ -26,10 +27,12 @@ impl Worker {
         &self,
         request: worker_protocol::WorkRequest,
     ) -> io::Result<worker_protocol::WorkResponse> {
+        let mut incremental_arg = std::ffi::OsString::from("incremental=");
+        incremental_arg.push(&self.incremental_dir);
         let mut cmd = std::process::Command::new(&self.rustc);
         cmd.args(request.arguments);
-        // TODO: Do this format only once.
-        cmd.arg(format!("--codegen=incremental={}", self.incremental_dir));
+        cmd.arg("--codegen");
+        cmd.arg(incremental_arg);
         let output = cmd.output()?;
         Ok(worker_protocol::WorkResponse {
             request_id: request.request_id,
