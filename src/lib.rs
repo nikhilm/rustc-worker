@@ -1,9 +1,8 @@
-use fnv::FnvBuildHasher;
 use protobuf::CodedInputStream;
 use protobuf::CodedOutputStream;
 use protobuf::Message;
 use protobuf::ProtobufResult;
-use std::hash::BuildHasher;
+use std::collections::hash_map::DefaultHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::io;
@@ -28,7 +27,7 @@ impl Worker {
         // The incremental cache directory includes the rustc wrapper's hash to discriminate
         // between multiple workspaces having the same name (usually __main__).
         let mut cache_path = std::env::temp_dir();
-        let mut hasher = FnvBuildHasher::default().build_hasher();
+        let mut hasher = DefaultHasher::new();
         rustc.hash(&mut hasher);
 
         cache_path.push(format!(
