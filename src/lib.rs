@@ -1,41 +1,42 @@
 use fnv::FnvBuildHasher;
 use prost::Message;
 use std::hash::BuildHasher;
+use std::hash::Hash;
 use std::hash::Hasher;
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
+use std::path::PathBuf;
 
 pub mod worker_protocol {
     include!(concat!(env!("OUT_DIR"), "/blaze.worker.rs"));
 }
 
 pub struct Worker {
-    program_path: String,
+    program_path: PathBuf,
     incremental_dir: std::path::PathBuf,
 }
 
 impl Worker {
-    pub fn new<P: Into<String>, P2: Into<String>>(
-        program_path: P,
-        rustc: P,
-        workspace: P2,
+    pub fn new<C: Into<String>>(
+        program_path: PathBuf,
+        rustc: PathBuf,
+        compilation_mode: C,
     ) -> io::Result<Self> {
         // The incremental cache directory includes the rustc wrapper's hash to discriminate
         // between multiple workspaces having the same name (usually __main__).
-        let rustc = rustc.into();
         let mut cache_path = std::env::temp_dir();
         let mut hasher = FnvBuildHasher::default().build_hasher();
-        hasher.write(&rustc.as_bytes());
+        rustc.hash(&mut hasher);
 
         cache_path.push(format!(
             "rustc-worker-{}-{}",
             hasher.finish(),
-            workspace.into()
+            compilation_mode.into()
         ));
         std::fs::create_dir_all(&cache_path)?;
         Ok(Worker {
-            program_path: program_path.into(),
+            program_path,
             incremental_dir: cache_path,
         })
     }

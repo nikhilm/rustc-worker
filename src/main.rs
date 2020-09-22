@@ -1,17 +1,15 @@
 fn main() -> std::io::Result<()> {
-    let mut args = std::env::args().peekable();
+    let mut args = std::env::args_os().peekable();
     // Always discard the executable name.
     args.next().unwrap();
 
-    let program = std::fs::canonicalize(args.next().expect("program name"))?
-        .into_os_string()
+    let program = std::fs::canonicalize(args.next().expect("program name"))?;
+    let rustc_path = std::fs::canonicalize(args.next().expect("rustc path"))?;
+    let compilation_mode = args
+        .next()
+        .expect("compilation mode")
         .into_string()
-        .unwrap();
-    let rustc_path = std::fs::canonicalize(args.next().expect("rustc path"))?
-        .into_os_string()
-        .into_string()
-        .unwrap();
-    let compilation_mode = args.next().expect("compilation mode");
+        .expect("compilation mode must be valid utf-8");
     // TODO: program and rustc_path will combine when this is merged into rules_rust.
     let worker = rustc_worker::Worker::new(program, rustc_path, compilation_mode)?;
 
@@ -26,7 +24,11 @@ fn main() -> std::io::Result<()> {
 
     // Spawn process as normal.
     // The process wrapper does not support response files.
-    let response_file_arg = args.next().unwrap();
+    let response_file_arg = args
+        .next()
+        .unwrap()
+        .into_string()
+        .expect("response file path is valid utf-8");
     // The response file has to be the last (and only) argument left.
     assert!(args.peek().is_none(), "iterator should be consumed!");
     assert!(response_file_arg.starts_with("@"));
