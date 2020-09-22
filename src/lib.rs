@@ -11,12 +11,16 @@ pub mod worker_protocol {
 }
 
 pub struct Worker {
-    rustc: String,
+    program_path: String,
     incremental_dir: std::path::PathBuf,
 }
 
 impl Worker {
-    pub fn new<P: Into<String>, P2: Into<String>>(rustc: P, workspace: P2) -> io::Result<Self> {
+    pub fn new<P: Into<String>, P2: Into<String>>(
+        program_path: P,
+        rustc: P,
+        workspace: P2,
+    ) -> io::Result<Self> {
         // The incremental cache directory includes the rustc wrapper's hash to discriminate
         // between multiple workspaces having the same name (usually __main__).
         let rustc = rustc.into();
@@ -31,7 +35,7 @@ impl Worker {
         ));
         std::fs::create_dir_all(&cache_path)?;
         Ok(Worker {
-            rustc,
+            program_path: program_path.into(),
             incremental_dir: cache_path,
         })
     }
@@ -42,7 +46,7 @@ impl Worker {
     ) -> io::Result<worker_protocol::WorkResponse> {
         let mut incremental_arg = std::ffi::OsString::from("incremental=");
         incremental_arg.push(&self.incremental_dir);
-        let mut cmd = std::process::Command::new(&self.rustc);
+        let mut cmd = std::process::Command::new(&self.program_path);
         cmd.args(request.arguments);
         cmd.arg("--codegen");
         cmd.arg(incremental_arg);
@@ -124,7 +128,7 @@ impl Worker {
     ) -> io::Result<std::process::ExitStatus> {
         let file = std::io::BufReader::new(std::fs::File::open(response_file_path)?);
 
-        let mut cmd = std::process::Command::new(&self.rustc);
+        let mut cmd = std::process::Command::new(&self.program_path);
         for line in file.lines() {
             cmd.arg(line?);
         }

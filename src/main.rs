@@ -7,8 +7,13 @@ fn main() -> std::io::Result<()> {
         .into_os_string()
         .into_string()
         .unwrap();
-    let workspace = args.next().expect("workspace name");
-    let worker = rustc_worker::Worker::new(program, workspace)?;
+    let rustc_path = std::fs::canonicalize(args.next().expect("rustc path"))?
+        .into_os_string()
+        .into_string()
+        .unwrap();
+    let compilation_mode = args.next().expect("compilation mode");
+    // TODO: program and rustc_path will combine when this is merged into rules_rust.
+    let worker = rustc_worker::Worker::new(program, rustc_path, compilation_mode)?;
 
     // If started as a persistent worker.
     if let Some(arg) = args.peek() {
