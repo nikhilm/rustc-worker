@@ -96,10 +96,13 @@ Incrementality is obtained like this:
 The Worker protocol is described in a [protocol
 buffer](https://github.com/bazelbuild/bazel/blob/07e152e508d9926f1ec87cdf33c9970ee2f18a41/src/main/protobuf/worker_protocol.proto).
 This protocol will change very rarely, so to simplify the build process, we
-vendor the [`prost-build`](https://docs.rs/prost-build/) generated code in the
-tree. This avoids the need for a build.rs and related dependencies. If you need
-to update this, use a `build.rs` as described in the `prost-build`
-documentation to obtain a new module and replace `src/blaze_worker.rs`.
+vendor the generated code in the tree. This avoids the need for worker
+consumers (via Bazel) to build `protoc` and `protobuf-codegen`. If you need to
+update this:
+
+1. Make sure `protoc` is installed for your operating system and in the path.
+2. `cargo install protobuf-codegen --version 2.8.2`.
+3. `protoc --rust_out src/ src/worker_protocol.proto`.
 
 ## TODO
 

@@ -26,6 +26,9 @@ load("@io_bazel_rules_rust//:workspace.bzl", "bazel_version")
 bazel_version(name = "bazel_version")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# load("@io_bazel_rules_rust//proto:repositories.bzl", "rust_proto_repositories")
+# rust_proto_repositories()
+
 http_archive(
     name = "rules_proto",
     sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
@@ -39,6 +42,8 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_
 rules_proto_dependencies()
 rules_proto_toolchains()
 
-register_toolchains(
-    ":default-proto-toolchain",
-)
+# register_toolchains(
+#     ":default-proto-toolchain",
+# )
+load("@io_bazel_rules_rust//proto/raze:crates.bzl", "raze_fetch_remote_crates")
+raze_fetch_remote_crates()
