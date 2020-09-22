@@ -1,4 +1,6 @@
-fn main() -> std::io::Result<()> {
+use protobuf::ProtobufResult;
+
+fn main() -> ProtobufResult<()> {
     let mut args = std::env::args_os().peekable();
     // Always discard the executable name.
     args.next().unwrap();
@@ -17,8 +19,10 @@ fn main() -> std::io::Result<()> {
     if let Some(arg) = args.peek() {
         if arg == "--persistent_worker" {
             let stdin = std::io::stdin();
-            let mut locked = stdin.lock();
-            return worker.main_loop(&mut locked);
+            let stdout = std::io::stdout();
+            let mut stdin_locked = stdin.lock();
+            let mut stdout_locked = stdout.lock();
+            return worker.main_loop(&mut stdin_locked, &mut stdout_locked);
         }
     }
 
