@@ -91,12 +91,19 @@ Incrementality is obtained like this:
 2. Bazel takes care of spawning multiple workers for parallelism. They all share the same cache. Since rustc operates at the crate level, and Bazel's design means that each crate has only one compilation artifact in the workspace, we can be reasonably sure that multiple `rustc` invocations never try to build the same crate at the same time. I'm not sure if this matters.
 3. The worker invokes `rustc` for each compilation request with `--codegen incremental=/path/to/cache`.
 
+## Updating the worker protocol
+
+The Worker protocol is described in a [protocol
+buffer](https://github.com/bazelbuild/bazel/blob/07e152e508d9926f1ec87cdf33c9970ee2f18a41/src/main/protobuf/worker_protocol.proto).
+This protocol will change very rarely, so to simplify the build process, we
+vendor the [`prost-build`](https://docs.rs/prost-build/) generated code in the
+tree. This avoids the need for a build.rs and related dependencies. If you need
+to update this, use a `build.rs` as described in the `prost-build`
+documentation to obtain a new module and replace `src/blaze_worker.rs`.
+
 ## TODO
 
 [ ] Tests
-[ ] Post on URLO and bazel-discuss whether sharing the incremental directory like this is even the right approach.
-[ ] Create binary releases for other platforms, and automate this.
-[ ] Submit issue for rules\_rust.
 [ ] How to build with Bazel to bootstrap in rules\_rust.
 [ ] Submit PR for rules\_rust.
 

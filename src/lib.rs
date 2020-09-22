@@ -8,9 +8,7 @@ use std::io::BufRead;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub mod worker_protocol {
-    include!(concat!(env!("OUT_DIR"), "/blaze.worker.rs"));
-}
+mod blaze_worker;
 
 pub struct Worker {
     program_path: PathBuf,
@@ -43,8 +41,8 @@ impl Worker {
 
     fn handle_request(
         &self,
-        request: worker_protocol::WorkRequest,
-    ) -> io::Result<worker_protocol::WorkResponse> {
+        request: blaze_worker::WorkRequest,
+    ) -> io::Result<blaze_worker::WorkResponse> {
         let mut incremental_arg = std::ffi::OsString::from("incremental=");
         incremental_arg.push(&self.incremental_dir);
         let mut cmd = std::process::Command::new(&self.program_path);
@@ -52,7 +50,7 @@ impl Worker {
         cmd.arg("--codegen");
         cmd.arg(incremental_arg);
         let output = cmd.output()?;
-        Ok(worker_protocol::WorkResponse {
+        Ok(blaze_worker::WorkResponse {
             request_id: request.request_id,
             exit_code: output.status.code().unwrap(),
             output: String::from_utf8(output.stderr).expect("TODO: use the Result"),
@@ -110,7 +108,7 @@ impl Worker {
             // expect a valid message to follow. Not getting that is an error.
             reader.read_exact(&mut data_buffer[already_read..])?;
             eprintln!("Beginning of data buffer is {:?}", &data_buffer[..20]);
-            let message: worker_protocol::WorkRequest = prost::Message::decode(&data_buffer[..])?;
+            let message: blaze_worker::WorkRequest = prost::Message::decode(&data_buffer[..])?;
             eprintln!("Req ID: {}", message.request_id);
             eprintln!("Req args: {:?}", message.arguments);
             eprintln!("---");
