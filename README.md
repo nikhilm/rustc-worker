@@ -31,7 +31,7 @@ comment-only change to `build/src/lib.rs`. (Using the `bazel` branch.)
 All times are for debug builds as that is the standard developer workflow,
 where incremental builds matter.
 
-```
+```bash
 cargo build (incremental by default)  1.65s
 bazel build (without worker)          2.47s
 bazel build (with worker)             1.2s
@@ -50,7 +50,7 @@ following changes to your `WORKSPACE` file.
 1. Change your `rules_rust` repository to point to the branch, like this. This
    should replace any existing entry for the rules.
 
-```
+```bazel
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "io_bazel_rules_rust",
@@ -61,7 +61,7 @@ git_repository(
 
 2. Add a repository for the rustc-worker binary for your platform.
 
-```
+```bazel
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 http_file(
@@ -76,7 +76,7 @@ That's it! Bazel 0.27 and higher will use workers by default when available. You
 
 If you want to play with this, but don't have an existing Rust project handy, you can:
 
-```
+```bash
 git clone https://github.com/nikhilm/ninja-rs
 cd ninja-rs
 git checkout bazel
@@ -106,9 +106,9 @@ update this:
 
 ## TODO
 
-[ ] Tests
-[ ] How to build with Bazel to bootstrap in rules\_rust.
-[ ] Submit PR for rules\_rust.
+- [ ] Tests
+- [ ] How to build with Bazel to bootstrap in rules\_rust.
+- [ ] Submit PR for rules\_rust.
 
 ## Contributing
 
